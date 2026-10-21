@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.18362.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>AsciiVision.Export</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp5" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsciiVision.Core\AsciiVision.Core.csproj" />
+    <ProjectReference Include="..\AsciiVision.Processing\AsciiVision.Processing.csproj" />
+    <ProjectReference Include="..\AsciiVision.Rendering\AsciiVision.Rendering.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="AsciiVision.Tests" />
+  </ItemGroup>
+</Project>

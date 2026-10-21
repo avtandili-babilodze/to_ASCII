@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.18362.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>AsciiVision.App</RootNamespace>
+    <AssemblyName>AsciiVision</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="Exists('AsciiVision.ico')">AsciiVision.ico</ApplicationIcon>
+    <Title>ASCII Vision</Title>
+    <Description>Real-time ASCII video engine for Windows</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+    <PackageReference Include="OpenCvSharp5.runtime.win" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsciiVision.Core\AsciiVision.Core.csproj" />
+    <ProjectReference Include="..\AsciiVision.Processing\AsciiVision.Processing.csproj" />
+    <ProjectReference Include="..\AsciiVision.Capture\AsciiVision.Capture.csproj" />
+    <ProjectReference Include="..\AsciiVision.Rendering\AsciiVision.Rendering.csproj" />
+    <ProjectReference Include="..\AsciiVision.Export\AsciiVision.Export.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="AsciiVision.ico" Condition="Exists('AsciiVision.ico')" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Program.Main owns start-up (it also serves the console-host role), so App.xaml is a plain page. -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+  <!-- OpenCV's FFmpeg video-I/O plugin is loaded only by cv::VideoCapture, which this app never uses
+       (decoding runs through the FFmpeg CLI), so it is left out of the output (~29 MB). -->
+  <Target Name="ExcludeUnusedOpenCvVideoPlugin" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)" Condition="'%(Filename)' == 'opencv_videoio_ffmpeg500_64'" />
+      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)" Condition="'%(Filename)' == 'opencv_videoio_ffmpeg500_64'" />
+    </ItemGroup>
+  </Target>
+</Project>

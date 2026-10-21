@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.18362.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="OpenCvSharp5" />
+    <PackageReference Include="OpenCvSharp5.runtime.win" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AsciiVision.Core\AsciiVision.Core.csproj" />
+    <ProjectReference Include="..\..\src\AsciiVision.Processing\AsciiVision.Processing.csproj" />
+    <ProjectReference Include="..\..\src\AsciiVision.Capture\AsciiVision.Capture.csproj" />
+    <ProjectReference Include="..\..\src\AsciiVision.Rendering\AsciiVision.Rendering.csproj" />
+    <ProjectReference Include="..\..\src\AsciiVision.Export\AsciiVision.Export.csproj" />
+  </ItemGroup>
+</Project>
