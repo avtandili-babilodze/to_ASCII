@@ -8,8 +8,9 @@
       * .NET 9 Desktop Runtime (x64)
       * Microsoft Visual C++ 2015-2022 Redistributable (x64), needed by OpenCV
       * FFmpeg with an H.264 encoder (for MP4 playback, recording and export)
-    Then copies the app to %LOCALAPPDATA%\Programs\ASCII Vision, creates Start menu and
-    desktop shortcuts and registers an uninstaller in "Installed apps".
+    Then copies the app to the chosen folder (default %LOCALAPPDATA%\Programs\ASCII Vision),
+    creates Start menu and desktop shortcuts and registers an uninstaller in "Installed apps".
+    A self-contained build (one that ships its own .NET runtime) skips the .NET runtime check.
 
     The app itself needs no administrator rights. Installing the .NET runtime or the
     Visual C++ runtime shows a Windows (UAC) prompt because those are system-wide.
@@ -17,11 +18,16 @@
 .EXAMPLE
     .\install.ps1
 .EXAMPLE
+    .\install.ps1 -ChooseLocation
+.EXAMPLE
     .\install.ps1 -NoDesktopShortcut -NoLaunch
 #>
 [CmdletBinding()]
 param(
     [string]$InstallDir = (Join-Path $env:LOCALAPPDATA 'Programs\ASCII Vision'),
+    [switch]$ChooseLocation,          # show a folder picker (an 'ASCII Vision' folder is created inside the choice)
+    [string]$AppSource,               # folder with AsciiVision.exe; default: the 'app' folder next to this script
+    [string]$Version,
     [switch]$NoDesktopShortcut,
     [switch]$SkipPrerequisites,
     [switch]$NoLaunch
@@ -36,8 +42,16 @@ $ExeName      = 'AsciiVision.exe'
 $Publisher    = 'ASCII Vision'
 $UninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\AsciiVision'
 $PackageRoot  = $PSScriptRoot
-$AppSource    = Join-Path $PackageRoot 'app'
-$Version      = if (Test-Path (Join-Path $PackageRoot 'version.txt')) { (Get-Content (Join-Path $PackageRoot 'version.txt') -Raw).Trim() } else { '1.0.0' }
+if (-not $AppSource) { $AppSource = Join-Path $PackageRoot 'app' }
+if (-not $Version) {
+    $versionFile = Join-Path $PackageRoot 'version.txt'
+    $exeForVersion = Join-Path $AppSource $ExeName
+    $Version = if (Test-Path $versionFile) { (Get-Content $versionFile -Raw).Trim() }
+               elseif (Test-Path $exeForVersion) { (Get-Item $exeForVersion).VersionInfo.ProductVersion -replace '\+.*$', '' }
+               else { '1.0.0' }
+}
+# A self-contained build carries its own .NET runtime.
+$IsSelfContained = Test-Path (Join-Path $AppSource 'hostfxr.dll')
 
 $DotnetRuntimeUrl = 'https://aka.ms/dotnet/9.0/windowsdesktop-runtime-win-x64.exe'
 $VCRedistUrl      = 'https://aka.ms/vs/17/release/vc_redist.x64.exe'
@@ -220,6 +234,57 @@ function Install-Ffmpeg {
     else { Write-Warn 'FFmpeg could not be installed. Screen and window capture still work; for MP4 features install FFmpeg later (winget install Gyan.FFmpeg) or choose ffmpeg.exe in the app under Settings > FFmpeg.' }
 }
 
+# ---------------------------------------------------------------- Install location
+
+function Test-Writable([string]$Directory) {
+    try {
+        New-Item -ItemType Directory -Force $Directory | Out-Null
+        $probe = Join-Path $Directory ('.write-test-' + [guid]::NewGuid().ToString('N'))
+        Set-Content -Path $probe -Value 'x'
+        Remove-Item $probe -Force
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+# Folder picker; returns the install folder (<choice>\ASCII Vision) or $null if cancelled.
+function Select-InstallDir([string]$Default) {
+    Add-Type -AssemblyName System.Windows.Forms
+    $owner = New-Object System.Windows.Forms.Form -Property @{ TopMost = $true; ShowInTaskbar = $false; WindowState = 'Minimized' }
+    try {
+        while ($true) {
+            $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+            $dialog.Description = "Choose where to install $AppName. A folder named '$AppName' will be created inside the folder you pick. (Default: $Default)"
+            $dialog.ShowNewFolderButton = $true
+            $parent = Split-Path $Default -Parent
+            if (Test-Path $parent) { $dialog.SelectedPath = $parent }
+            if ($dialog.ShowDialog($owner) -ne [System.Windows.Forms.DialogResult]::OK) { return $null }
+
+            $chosen = $dialog.SelectedPath
+            $target = if ((Split-Path $chosen -Leaf) -eq $AppName) { $chosen } else { Join-Path $chosen $AppName }
+            if (Test-Writable $target) { return $target }
+            [System.Windows.Forms.MessageBox]::Show($owner,
+                "You don't have permission to write to:`n$target`n`nFolders like Program Files need administrator rights. Please choose a folder in your user profile or on another drive.",
+                $AppName, 'OK', 'Warning') | Out-Null
+        }
+    } finally {
+        $owner.Dispose()
+    }
+}
+
+# If the app is already installed somewhere else, remove that copy (settings are kept).
+function Remove-PreviousInstall {
+    $previous = (Get-ItemProperty -Path $UninstallKey -Name InstallLocation -ErrorAction SilentlyContinue).InstallLocation
+    if ($previous -and (Test-Path (Join-Path $previous $ExeName)) -and
+        -not [string]::Equals((Resolve-Path $previous).Path.TrimEnd('\'), [IO.Path]::GetFullPath($InstallDir).TrimEnd('\'), [StringComparison]::OrdinalIgnoreCase)) {
+        Write-Step "Removing the previous installation in $previous"
+        $uninstaller = Join-Path $previous 'uninstall.ps1'
+        if (Test-Path $uninstaller) { & $uninstaller -Quiet | Out-Null }
+        Write-Ok 'Previous copy removed (your settings were kept)'
+    }
+}
+
 # ---------------------------------------------------------------- App files, shortcuts, uninstaller
 
 function Stop-RunningApp {
@@ -236,7 +301,7 @@ function Stop-RunningApp {
 function Copy-AppFiles {
     Write-Step "Installing $AppName $Version to $InstallDir"
     if (-not (Test-Path (Join-Path $AppSource $ExeName))) {
-        throw "The 'app' folder next to this script is missing or incomplete. Extract the whole zip before running the installer."
+        throw "The app files were not found in '$AppSource'. Extract the whole zip before running the installer."
     }
     $isPreviousInstall = Test-Path (Join-Path $InstallDir $ExeName)
     if ((Test-Path $InstallDir) -and -not $isPreviousInstall -and (Get-ChildItem $InstallDir -Force | Select-Object -First 1)) {
@@ -249,7 +314,7 @@ function Copy-AppFiles {
         Get-ChildItem $InstallDir -Force | Where-Object { $_.Name -ne 'ffmpeg' } | Remove-Item -Recurse -Force
     }
     Copy-Item (Join-Path $AppSource '*') $InstallDir -Recurse -Force
-    Copy-Item (Join-Path $PackageRoot 'uninstall.ps1') $InstallDir -Force
+    Copy-Item (Join-Path $PSScriptRoot 'uninstall.ps1') $InstallDir -Force
     Set-Content -Path (Join-Path $InstallDir 'version.txt') -Value $Version -Encoding ASCII
     # Files extracted from a downloaded zip carry the "from the internet" mark; clear it for the installed copy.
     Get-ChildItem $InstallDir -Recurse -File | Unblock-File -ErrorAction SilentlyContinue
@@ -308,12 +373,26 @@ try {
     Write-Host "  ASCII Vision $Version installer" -ForegroundColor White
     Write-Host '  ---------------------------------'
     Test-WindowsVersion
+    if ($ChooseLocation) {
+        $selected = Select-InstallDir $InstallDir
+        if (-not $selected) {
+            Write-Host ''
+            Write-Host '  Installation cancelled.' -ForegroundColor Yellow
+            exit 2
+        }
+        $InstallDir = $selected
+    } elseif (-not (Test-Writable $InstallDir)) {
+        throw "Cannot write to '$InstallDir'. Choose a folder in your user profile with -InstallDir or -ChooseLocation."
+    }
+    Write-Ok "Install folder: $InstallDir"
     if ($SkipPrerequisites) {
         Write-Warn 'Skipping prerequisite checks (-SkipPrerequisites).'
     } else {
-        Install-DesktopRuntime
+        if ($IsSelfContained) { Write-Step 'Checking .NET runtime'; Write-Ok 'Not needed: this build includes its own .NET runtime' }
+        else { Install-DesktopRuntime }
         Install-VCRedist
     }
+    Remove-PreviousInstall
     Copy-AppFiles
     if (-not $SkipPrerequisites) { Install-Ffmpeg }   # after the copy so it can go into the app folder
     New-Shortcuts
