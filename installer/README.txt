@@ -3,7 +3,8 @@ ASCII Vision - real-time ASCII video engine for Windows
 
 INSTALL
   1. Extract the whole zip to any folder (right-click > Extract All).
-  2. Double-click Install.cmd.
+  2. Double-click Install.cmd and choose where to install
+     (an 'ASCII Vision' folder is created inside the folder you pick).
      If Windows shows "Windows protected your PC", click "More info" > "Run anyway"
      (the files are not code-signed).
   3. When it finishes, start ASCII Vision from the desktop or Start menu shortcut.
@@ -14,8 +15,8 @@ INSTALL
     - Visual C++ 2015-2022 Redistributable (x64)                    (from Microsoft)
     - FFmpeg with H.264 support, for MP4 playback/recording/export  (from gyan.dev)
   Installing the .NET or Visual C++ runtime shows a Windows permission (UAC) prompt.
-  The app itself is installed for your user only, in:
-    %LOCALAPPDATA%\Programs\ASCII Vision
+  The app is installed for your user only, in the folder you choose
+  (default: %LOCALAPPDATA%\Programs\ASCII Vision).
 
   Options (run from PowerShell in this folder):
     .\install.ps1 -NoDesktopShortcut   no desktop shortcut

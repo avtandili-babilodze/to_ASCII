@@ -20,22 +20,36 @@ and FFmpeg. Everything runs locally. No account, API key or network connection i
 
 ## Install (for users)
 
-1. Download `AsciiVision-<version>-win-x64.zip` from the [Releases](../../releases) page and extract it.
-2. Double-click **`Install.cmd`**. If Windows shows "Windows protected your PC", click **More info → Run anyway**. The files are not code-signed.
-3. Start **ASCII Vision** from the desktop or Start menu shortcut.
+**Option A: from this repository (the simplest).**
 
-The installer checks what is already on the PC and installs only what is missing:
+1. Click **Code → Download ZIP** on GitHub and extract it, or clone it with `git clone https://github.com/avtandili-babilodze/to_ASCII.git`.
+2. Double-click **`Install.cmd`** in the main folder.
+3. Choose where to install. An `ASCII Vision` folder is created inside the folder you pick, and the default is `%LOCALAPPDATA%\Programs`.
+4. Start **ASCII Vision** from the desktop or Start menu shortcut it creates.
+
+If a matching GitHub Release exists, setup downloads that ready-made build (about 42 MB) and checks its checksum. Otherwise it **builds the app from the source code**. When no .NET 9 SDK is installed, setup installs one for your user account first (no administrator rights needed, about 250 MB), and the first build takes a few minutes. Source builds include their own .NET runtime.
+
+**Option B: from a release.** Download `AsciiVision-<version>-win-x64.zip` from the [Releases](../../releases) page, extract it, and double-click `Install.cmd` inside.
+
+If Windows shows "Windows protected your PC", click **More info → Run anyway**. The files are not code-signed.
+
+Both ways check what is already on the PC and install only what is missing:
 
 | Requirement | If missing |
 |---|---|
-| Windows 10 1903+ / Windows 11, 64-bit | the installer stops with an explanation |
-| .NET 9 Desktop Runtime (x64) | installed from Microsoft (winget, or the official `aka.ms` download) |
+| Windows 10 1903+ / Windows 11, 64-bit | setup stops with an explanation |
+| .NET 9 Desktop Runtime (x64), release builds only | installed from Microsoft (winget, or the official `aka.ms` download) |
 | Visual C++ 2015–2022 Redistributable x64 (≥ 14.30) | installed from Microsoft |
 | FFmpeg with H.264 support | a full build from gyan.dev is downloaded into the app folder (`PATH` is not changed) |
 
-Installing the .NET or Visual C++ runtime shows a Windows (UAC) permission prompt. The app itself installs for the current user only, in `%LOCALAPPDATA%\Programs\ASCII Vision`, and appears in **Settings → Apps**, where you can uninstall it. Uninstalling leaves the shared runtimes installed.
+Installing the .NET or Visual C++ runtime shows a Windows (UAC) permission prompt. The app itself installs for the current user and appears in **Settings → Apps**, where you can uninstall it. Uninstalling leaves the shared runtimes installed. Reinstalling into a different folder removes the old copy and keeps your settings.
 
-Advanced options (`install.ps1 -NoDesktopShortcut`, `-NoLaunch`, `-SkipPrerequisites` and `-InstallDir`) are described in the `README.txt` inside the zip.
+Setup options (PowerShell, from the main folder):
+
+* `.\installer\setup.ps1 -InstallDir "D:\Apps\ASCII Vision"` skips the folder picker.
+* `-FromSource` always builds from source.
+* `-NoDesktopShortcut` skips the desktop shortcut.
+* `-NoLaunch` does not start the app at the end.
 
 ## Features
 
@@ -190,7 +204,8 @@ src/
 tests/
   AsciiVision.Tests        unit + integration tests (xUnit)
 docs/                      architecture, performance, verification, dependencies, test checklist
-installer/                 Install.cmd / install.ps1 / uninstall.ps1 used in the release zip
+Install.cmd                double-click setup from a clone or source ZIP (runs installer/setup.ps1)
+installer/                 setup.ps1 (release download or source build), install.ps1 / uninstall.ps1 / Install.cmd for the release zip
 build-release.ps1          builds release\AsciiVision-<version>-win-x64(.zip)
 ```
 
