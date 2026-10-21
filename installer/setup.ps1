@@ -74,7 +74,10 @@ function Get-ReleasePackage([string]$Version) {
 
     $shaAsset = $release.assets | Where-Object { $_.name -eq "$($zipAsset.name).sha256" } | Select-Object -First 1
     if ($shaAsset) {
-        $expected = ((Invoke-WebRequest -Uri $shaAsset.browser_download_url -UseBasicParsing).Content.ToString().Trim() -split '\s+')[0]
+        # Saved to a file: GitHub serves it as binary, so .Content would be a byte array in PowerShell 5.1.
+        $shaFile = Join-Path $work $shaAsset.name
+        Invoke-WebRequest -Uri $shaAsset.browser_download_url -OutFile $shaFile -UseBasicParsing
+        $expected = ((Get-Content $shaFile -Raw).Trim() -split '\s+')[0]
         $actual = (Get-FileHash $zip -Algorithm SHA256).Hash
         if ($expected -ne $actual) { throw 'The downloaded package does not match its published SHA-256 checksum.' }
         Write-Ok 'Checksum verified'
