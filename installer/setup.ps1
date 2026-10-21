@@ -111,7 +111,7 @@ function Install-DotnetSdk {
     Write-Info 'No .NET 9 SDK found - installing it for your user account (no administrator rights needed, about 250 MB).'
     $script = Join-Path $env:TEMP 'dotnet-install.ps1'
     Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -OutFile $script -UseBasicParsing
-    & $script -Channel 9.0 -InstallDir $UserDotnetDir -NoPath
+    & $script -Channel 9.0 -InstallDir $UserDotnetDir -NoPath | Out-Host
     Remove-Item $script -ErrorAction SilentlyContinue
     $dotnet = Join-Path $UserDotnetDir 'dotnet.exe'
     if (-not (Test-Path $dotnet)) { throw '.NET SDK installation failed.' }
@@ -129,7 +129,8 @@ function Build-FromSource {
     $env:DOTNET_NOLOGO = '1'
     Write-Info 'Compiling (the first build downloads packages and takes a few minutes)...'
     # Self-contained: the built app carries its own .NET runtime.
-    & $dotnet publish $Project -p:PublishProfile=win-x64-selfcontained -nologo -v:minimal
+    # Out-Host keeps the build log out of this function's return value.
+    & $dotnet publish $Project -p:PublishProfile=win-x64-selfcontained -nologo -v:minimal | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Build failed (exit code $LASTEXITCODE). See the messages above." }
 
     $output = Join-Path $RepoRoot 'artifacts\publish\win-x64-selfcontained'
