@@ -1,5 +1,55 @@
 # ASCII Vision
 
+**Turn your screen, any window or game, or an MP4 video into live ASCII art.** A free Windows app.
+
+## Download and install
+
+### ⬇ [Download ASCII Vision for Windows (zip, 42 MB)](https://github.com/avtandili-babilodze/to_ASCII/releases/latest/download/AsciiVision-1.0.0-win-x64.zip)
+
+1. **Extract** the downloaded zip: right-click it, choose **Extract All…**, then **Extract**.
+2. Open the extracted folder and **double-click `Install.cmd`**.
+   If Windows says *"Windows protected your PC"*, click **More info**, then **Run anyway**. This appears because the app isn't code-signed.
+3. **Choose where to install**, or just click **OK** for the default location.
+
+That's it. Start **ASCII Vision** from the new **desktop shortcut** or the Start menu.
+
+**Requirements:** Windows 10 (version 1903 or newer) or Windows 11, 64-bit. Anything else the app needs is checked and installed for you if it's missing: the .NET runtime, the Visual C++ runtime and FFmpeg.
+**Uninstall:** Settings → Apps → Installed apps → ASCII Vision → Uninstall.
+
+<details>
+<summary><b>Other ways to install, and what the installer does</b></summary>
+
+**From the source code:** click **Code → Download ZIP** on this page, or `git clone https://github.com/avtandili-babilodze/to_ASCII.git`. Then double-click **`Install.cmd`** in the main folder.
+
+* If a release with the same version exists, setup downloads that ready-made build and verifies its checksum.
+* Otherwise it builds the app from the source. If no .NET 9 SDK is installed, setup installs one for your user account first (no administrator rights, about 250 MB), and the first build takes a few minutes.
+
+All releases are on the [Releases](https://github.com/avtandili-babilodze/to_ASCII/releases) page.
+
+The installer checks what is already on the PC and installs only what is missing:
+
+| Requirement | If missing |
+|---|---|
+| Windows 10 1903+ / Windows 11, 64-bit | setup stops with an explanation |
+| .NET 9 Desktop Runtime (x64) (not needed by source builds, which include it) | installed from Microsoft (winget, or the official `aka.ms` download) |
+| Visual C++ 2015–2022 Redistributable x64 (≥ 14.30) | installed from Microsoft |
+| FFmpeg with H.264 support | a full build from gyan.dev is downloaded into the app folder (`PATH` is not changed) |
+
+Installing the .NET or Visual C++ runtime shows a Windows permission (UAC) prompt.
+
+The app installs for the current user only and appears in **Settings → Apps**. Uninstalling leaves the shared runtimes installed. Reinstalling into a different folder removes the old copy and keeps your settings.
+
+Setup options (PowerShell, from the main folder):
+
+* `.\installer\setup.ps1 -InstallDir "D:\Apps\ASCII Vision"` skips the folder picker.
+* `-FromSource` always builds from source.
+* `-NoDesktopShortcut` skips the desktop shortcut.
+* `-NoLaunch` does not start the app at the end.
+
+</details>
+
+## About
+
 ASCII Vision is a native Windows desktop app that turns moving video into real-time ASCII art.
 It can capture a whole monitor, a single application or game window, or play a local MP4 file.
 It converts every frame into character art and shows the result in the app, in a real Windows
@@ -18,39 +68,6 @@ and FFmpeg. Everything runs locally. No account, API key or network connection i
  \_| |_/\____/ \____/\___/ \___/  VISION
 ```
 
-## Install (for users)
-
-**Option A: from this repository (the simplest).**
-
-1. Click **Code → Download ZIP** on GitHub and extract it, or clone it with `git clone https://github.com/avtandili-babilodze/to_ASCII.git`.
-2. Double-click **`Install.cmd`** in the main folder.
-3. Choose where to install. An `ASCII Vision` folder is created inside the folder you pick, and the default is `%LOCALAPPDATA%\Programs`.
-4. Start **ASCII Vision** from the desktop or Start menu shortcut it creates.
-
-If a matching GitHub Release exists, setup downloads that ready-made build (about 42 MB) and checks its checksum. Otherwise it **builds the app from the source code**. When no .NET 9 SDK is installed, setup installs one for your user account first (no administrator rights needed, about 250 MB), and the first build takes a few minutes. Source builds include their own .NET runtime.
-
-**Option B: from a release.** Download `AsciiVision-<version>-win-x64.zip` from the [Releases](../../releases) page, extract it, and double-click `Install.cmd` inside.
-
-If Windows shows "Windows protected your PC", click **More info → Run anyway**. The files are not code-signed.
-
-Both ways check what is already on the PC and install only what is missing:
-
-| Requirement | If missing |
-|---|---|
-| Windows 10 1903+ / Windows 11, 64-bit | setup stops with an explanation |
-| .NET 9 Desktop Runtime (x64), release builds only | installed from Microsoft (winget, or the official `aka.ms` download) |
-| Visual C++ 2015–2022 Redistributable x64 (≥ 14.30) | installed from Microsoft |
-| FFmpeg with H.264 support | a full build from gyan.dev is downloaded into the app folder (`PATH` is not changed) |
-
-Installing the .NET or Visual C++ runtime shows a Windows (UAC) permission prompt. The app itself installs for the current user and appears in **Settings → Apps**, where you can uninstall it. Uninstalling leaves the shared runtimes installed. Reinstalling into a different folder removes the old copy and keeps your settings.
-
-Setup options (PowerShell, from the main folder):
-
-* `.\installer\setup.ps1 -InstallDir "D:\Apps\ASCII Vision"` skips the folder picker.
-* `-FromSource` always builds from source.
-* `-NoDesktopShortcut` skips the desktop shortcut.
-* `-NoLaunch` does not start the app at the end.
-
 ## Features
 
 | Area | What you get |
@@ -66,7 +83,7 @@ Setup options (PowerShell, from the main folder):
 | **Presets** | Save and load JSON presets with validation. Settings persist between runs |
 | **Diagnostics** | Measured capture, processing, preview and console FPS, frame time, grid size, dropped frames, recording status. Log files are written to disk |
 
-## Requirements
+## Requirements in detail
 
 * **Windows 10 version 1903 (build 18362) or newer, or Windows 11, x64.**
   * Hiding the app from its own capture (no "infinite mirror") and toggling cursor capture need Windows 10 2004 (build 19041).
@@ -113,7 +130,7 @@ This creates:
 * `release\AsciiVision-<version>-win-x64\`: the ready-to-run installer folder (`Install.cmd`, `install.ps1`, `uninstall.ps1`, `README.txt`, `app\`)
 * `release\AsciiVision-<version>-win-x64.zip` and `.zip.sha256`
 
-To publish on GitHub, create a release (for example tag `v1.0.0`) and upload the `.zip` and `.sha256` files as release assets. `release/` and `artifacts/` are git-ignored, so binaries never go into the repository itself. The version comes from `<Version>` in `Directory.Build.props`.
+To publish on GitHub, create a release (for example tag `v1.0.0`) and upload the `.zip` and `.sha256` files as release assets. `release/` and `artifacts/` are git-ignored, so binaries never go into the repository itself. The version comes from `<Version>` in `Directory.Build.props`. When you publish a new version, also update the version number in the **Download** link at the top of this README.
 
 You can open `AsciiVision.sln` in Visual Studio 2022 (17.12 or newer) and press F5. The startup project is `AsciiVision.App`.
 
